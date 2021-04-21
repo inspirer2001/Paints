@@ -13,12 +13,12 @@ from django.shortcuts import render, redirect
 def store(request):
 	data = cartData(request)
 
-	cartItems = data['cartItems']
-	order = data['order']
-	items = data['items']
+	cartItem = data['cartItems']
+	# order = data['order']
+	# items = data['items']
 
-	products = Product.objects.all()
-	context = {'products':products, 'cartItems':cartItems}
+	product = Product.objects.all()
+	context = {'products':product, 'cartItems':cartItem}
 	return render(request, 'store/store.html', context)
 
 
