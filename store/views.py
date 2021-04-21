@@ -2,9 +2,14 @@ from django.shortcuts import render
 from django.http import JsonResponse
 import json
 import datetime
-from .models import * 
+from django.contrib import auth
+from.forms import SignUpForm
+from .models import *
 from .utils import cookieCart, cartData, guestOrder
-
+from django.contrib import messages
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.shortcuts import render, redirect
 def store(request):
 	data = cartData(request)
 
@@ -90,3 +95,53 @@ def processOrder(request):
 		)
 
 	return JsonResponse('Payment submitted..', safe=False)
+
+def Login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request=request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                auth.login(request, user)
+                # Profile(request,user)
+                return redirect('/store')
+            else:
+                messages.error(request, "Invalid username or password.")
+        else:
+            messages.error(request, "Invalid username or password.")
+    form = AuthenticationForm()
+    return render(request = request,
+                    template_name = "store/login.html",
+                    context={"form":form})
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            custome=Customer.objects.create(user=user)
+            # profile.Mobile=form.cleaned_data.get('Mobile')
+            custome.save()
+            auth.login(request, user)
+            return render(request, 'store/response.html', {'title': 'response'})
+    else:
+        form = SignUpForm()
+    return render(request, 'store/signup.html', {'form':form})
+
+def logout(request):
+    auth.logout(request)
+    return render(request, 'store/logout.html', {'title': 'logout'})
+
+def productview(request):
+    pview = ProductView.objects.all()
+    products = Product.objects.all()
+    context={
+    "pview": pview,
+    "products" : products
+    }
+    return render(request, 'store/productviews.html', context)
